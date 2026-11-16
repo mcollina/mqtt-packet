@@ -3267,3 +3267,31 @@ testGenerateErrorMultipleCmds([
   topic: 'test', // required for publish
   messageId: 'a'
 }, {})
+
+test('parses a large packet delivered in many small chunks', t => {
+  const payloadSize = 1024 * 1024
+  const publish = mqtt.generate({
+    cmd: 'publish',
+    topic: 'test',
+    payload: Buffer.alloc(payloadSize, 0x41),
+    qos: 0
+  })
+
+  const parser = mqtt.parser()
+  let got = false
+  parser.on('packet', packet => {
+    if (packet.cmd === 'publish') got = true
+  })
+
+  const start = process.hrtime.bigint()
+  for (let i = 0; i < publish.length; i += 4) {
+    parser.parse(publish.subarray(i, i + 4))
+  }
+  const elapsed = Number(process.hrtime.bigint() - start) / 1e6
+
+  t.ok(got, 'packet was parsed from many small chunks')
+  // Guard against the O(n²) regression: with bl this took ~8.6s; with
+  // dynamic-buffer it is well under 100ms. 2s leaves a huge margin.
+  t.ok(elapsed < 2000, `parsed in ${elapsed.toFixed(0)}ms (< 2000ms)`)
+  t.end()
+})

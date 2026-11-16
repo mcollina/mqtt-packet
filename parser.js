@@ -37,6 +37,10 @@ class Parser extends EventEmitter {
   parse (buf) {
     if (this.error) this._resetState()
 
+    // bl coerced non-Buffer input (e.g. Uint8Array from WebSocket). dynamic-buffer
+    // does not, so normalise here to preserve that behaviour.
+    if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf)
+
     this._list.append(buf)
     debug('parse: current state: %s', this._states[this._stateCounter])
     while ((this.packet.length !== -1 || this._list.length > 0) &&
