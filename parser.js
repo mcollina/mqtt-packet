@@ -1,4 +1,5 @@
 const { DynamicBuffer } = require('@platformatic/dynamic-buffer')
+const { Buffer } = require('buffer')
 const { EventEmitter } = require('events')
 const Packet = require('./packet')
 const constants = require('./constants')
@@ -40,9 +41,12 @@ class Parser extends EventEmitter {
   parse (buf) {
     if (this.error) this._resetState()
 
-    // bl coerced non-Buffer input (e.g. Uint8Array from WebSocket). dynamic-buffer
-    // does not, so normalise here to preserve that behaviour.
-    if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf)
+    // dynamic-buffer needs Buffers; wrap views (Uint8Array, DataView) without copying, as bl did.
+    if (!Buffer.isBuffer(buf)) {
+      buf = ArrayBuffer.isView(buf)
+        ? Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength)
+        : Buffer.from(buf)
+    }
 
     this._list.append(buf)
     debug('parse: current state: %s', this._states[this._stateCounter])
