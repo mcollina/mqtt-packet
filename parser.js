@@ -1,4 +1,5 @@
-const bl = require('bl')
+const { DynamicBuffer } = require('@platformatic/dynamic-buffer')
+const { Buffer } = require('buffer')
 const { EventEmitter } = require('events')
 const Packet = require('./packet')
 const constants = require('./constants')
@@ -30,7 +31,7 @@ class Parser extends EventEmitter {
     debug('_resetState: resetting packet, error, _list, and _stateCounter')
     this.packet = new Packet()
     this.error = null
-    this._list = bl()
+    this._list = new DynamicBuffer()
     // A mid-packet error leaves _pos non-zero; the next packet must not start there.
     this._pos = 0
     this._truncated = false
@@ -39,6 +40,13 @@ class Parser extends EventEmitter {
 
   parse (buf) {
     if (this.error) this._resetState()
+
+    // dynamic-buffer needs Buffers; wrap views (Uint8Array, DataView) without copying, as bl did.
+    if (!Buffer.isBuffer(buf)) {
+      buf = ArrayBuffer.isView(buf)
+        ? Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength)
+        : Buffer.from(buf)
+    }
 
     this._list.append(buf)
     debug('parse: current state: %s', this._states[this._stateCounter])

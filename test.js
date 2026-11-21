@@ -3673,3 +3673,80 @@ testGenerateErrorMultipleCmds([
   topic: 'test', // required for publish
   messageId: 'a'
 }, {})
+
+test('parses a large packet delivered in many small chunks', t => {
+  const payloadSize = 1024 * 1024
+  const publish = mqtt.generate({
+    cmd: 'publish',
+    topic: 'test',
+    payload: Buffer.alloc(payloadSize, 0x41),
+    qos: 0
+  })
+
+  const parser = mqtt.parser()
+  let got = false
+  parser.on('packet', packet => {
+    if (packet.cmd === 'publish' && packet.payload.length === payloadSize) got = true
+  })
+
+  const start = process.hrtime.bigint()
+  for (let i = 0; i < publish.length; i += 4) {
+    parser.parse(publish.subarray(i, i + 4))
+  }
+  const elapsed = Number(process.hrtime.bigint() - start) / 1e6
+
+  t.ok(got, 'packet was parsed from many small chunks')
+  // Guard against the O(n²) regression: with bl this took ~8.6s; with
+  // dynamic-buffer it is well under 100ms. 2s leaves a huge margin.
+  t.ok(elapsed < 2000, `parsed in ${elapsed.toFixed(0)}ms (< 2000ms)`)
+  t.end()
+})
+
+test('parses a packet with many fields delivered in many small chunks', t => {
+  // Many small reads at growing offsets in one fragmented packet: O(n²) without a cursor cache.
+  const count = 40000
+  const subscriptions = []
+  for (let i = 0; i < count; i++) subscriptions.push({ topic: `t/${i}`, qos: 1 })
+  const subscribe = mqtt.generate({ cmd: 'subscribe', messageId: 1, subscriptions })
+
+  const parser = mqtt.parser()
+  let packet = null
+  parser.on('packet', p => { packet = p })
+
+  const start = process.hrtime.bigint()
+  for (let i = 0; i < subscribe.length; i += 4) {
+    parser.parse(subscribe.subarray(i, i + 4))
+  }
+  const elapsed = Number(process.hrtime.bigint() - start) / 1e6
+
+  t.equal(packet.cmd, 'subscribe')
+  t.equal(packet.subscriptions.length, count)
+  t.deepEqual(packet.subscriptions[count - 1], { topic: `t/${count - 1}`, qos: 1 })
+  t.ok(elapsed < 2000, `parsed in ${elapsed.toFixed(0)}ms (< 2000ms)`)
+  t.end()
+})
+
+test('parses non-Buffer views, whole and fragmented', t => {
+  const publish = mqtt.generate({ cmd: 'publish', topic: 'a/b', payload: 'hello', qos: 0 })
+  // Offset view into a larger ArrayBuffer, so byteOffset is honoured.
+  const backing = new Uint8Array(publish.length + 3)
+  backing.set(publish, 3)
+  const u8 = backing.subarray(3)
+  const view = new DataView(backing.buffer, 3, publish.length)
+  const cases = {
+    Uint8Array: [u8],
+    'fragmented Uint8Array': [u8.subarray(0, 4), u8.subarray(4)],
+    DataView: [view]
+  }
+
+  for (const [name, chunks] of Object.entries(cases)) {
+    const parser = mqtt.parser()
+    let packet = null
+    parser.on('packet', p => { packet = p })
+    parser.on('error', err => t.fail(err.message))
+    for (const chunk of chunks) parser.parse(chunk)
+    t.equal(packet && packet.topic, 'a/b', `${name}: topic`)
+    t.equal(packet && packet.payload.toString(), 'hello', `${name}: payload`)
+  }
+  t.end()
+})

@@ -40,9 +40,14 @@
     "tap-spec": "^5.0.0",
     "tape": "^5.7.2"
   },
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "dependencies": {
-    "bl": "^6.0.8",
+    "@platformatic/dynamic-buffer": "^0.6.0",
+    "buffer": "^6.0.3",
     "debug": "^4.3.4",
+    "events": "^3.3.0",
     "process-nextick-args": "^2.0.1"
   }
 }
