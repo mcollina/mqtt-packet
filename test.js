@@ -592,6 +592,32 @@ testParseGenerate('connect MQTT 5 w/o will properties', {
   4, 3, 2, 1// Will payload
 ]))
 
+testParseGenerate('connect MQTT 5 with password and no username', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 27,
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  password: Buffer.from('password')
+}, Buffer.from([
+  16, 27, // Header
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
+  5, // Protocol version
+  66, // Connect flags: password, clean
+  0, 30, // Keepalive
+  0, // Properties length
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, 8, // Password length
+  112, 97, 115, 115, 119, 111, 114, 100 // Password
+]))
+
 testParseGenerate('no clientId with 3.1.1', {
   cmd: 'connect',
   retain: false,
@@ -1705,6 +1731,25 @@ testParseError('Connect flag bit 0 must be 0, but got 1', Buffer.from([
   0x4d, 0x51, 0x54, 0x54, // Protocol ID
   3, // Protocol version
   3, // Connect flags
+  0, 30 // Keepalive
+]))
+
+// If the User Name Flag is set to 0, the Password Flag MUST be set to 0 [MQTT-3.1.2-22]
+testParseError('Password Flag must be set to zero when User Name Flag is set to 0', Buffer.from([
+  16, 10, // Header
+  0, 4, // Protocol ID length
+  0x4d, 0x51, 0x54, 0x54, // Protocol ID
+  4, // Protocol version
+  0x42, // Connect flags: password, clean
+  0, 30 // Keepalive
+]))
+
+testParseError('Password Flag must be set to zero when User Name Flag is set to 0', Buffer.from([
+  16, 12, // Header
+  0, 6, // Protocol ID length
+  0x4d, 0x51, 0x49, 0x73, 0x64, 0x70, // Protocol ID: MQIsdp
+  3, // Protocol version
+  0x42, // Connect flags: password, clean
   0, 30 // Keepalive
 ]))
 
@@ -3267,7 +3312,7 @@ testGenerateError('Invalid password', {
   password: 42
 })
 
-testGenerateError('Username is required to use password', {
+testGenerateError('Username is required to use password before MQTT 5', {
   cmd: 'connect',
   retain: false,
   qos: 0,
@@ -3285,7 +3330,20 @@ testGenerateError('Username is required to use password', {
   keepalive: 30,
   clientId: 'test',
   password: 'password'
-})
+}, {}, 'Username is required to use password with MQTT 3.1')
+
+testGenerateError('Username is required to use password before MQTT 5', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  protocolId: 'MQTT',
+  protocolVersion: 4,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  password: 'password'
+}, {}, 'Username is required to use password with MQTT 3.1.1')
 
 testGenerateError('Invalid messageExpiryInterval: -4321', {
   cmd: 'publish',
