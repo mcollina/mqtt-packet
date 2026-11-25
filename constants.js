@@ -1,6 +1,7 @@
+import { Buffer } from 'buffer'
+
 /* Protocol - protocol constants */
-const protocol = module.exports
-const { Buffer } = require('buffer')
+const protocol = {}
 
 /* Command code => mnemonic */
 protocol.types = {
@@ -296,3 +297,6 @@ protocol.parserErrorCodes = {
   MALFORMED_PACKET: 'MALFORMED_PACKET',
   UNSUPPORTED_PROTOCOL_VERSION: 'UNSUPPORTED_PROTOCOL_VERSION'
 }
+
+export const parserErrorCodes = protocol.parserErrorCodes
+export default protocol

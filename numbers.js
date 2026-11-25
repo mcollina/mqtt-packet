@@ -1,4 +1,4 @@
-const { Buffer } = require('buffer')
+import { Buffer } from 'buffer'
 const max = 65536
 const cache = {}
 
@@ -56,10 +56,10 @@ function generate4ByteBuffer (num) {
   return buffer
 }
 
-module.exports = {
+export {
   cache,
   generateCache,
-  generateNumber: generateBuffer,
   genBufVariableByteInt,
   generate4ByteBuffer
 }
+export const generateNumber = generateBuffer

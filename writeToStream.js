@@ -1,10 +1,13 @@
-const protocol = require('./constants')
-const { Buffer } = require('buffer')
+import protocol from './constants.js'
+import { Buffer } from 'buffer'
+import * as numbers from './numbers.js'
+import processNextTickArgs from 'process-nextick-args'
+import debugFactory from 'debug'
+
 const empty = Buffer.allocUnsafe(0)
 const zeroBuf = Buffer.from([0])
-const numbers = require('./numbers')
-const nextTick = require('process-nextick-args').nextTick
-const debug = require('debug')('mqtt-packet:writeToStream')
+const nextTick = processNextTickArgs.nextTick
+const debug = debugFactory('mqtt-packet:writeToStream')
 
 const numCache = numbers.cache
 const generateNumber = numbers.generateNumber
@@ -1142,4 +1145,4 @@ function isStringOrBuffer (field) {
   return typeof field === 'string' || field instanceof Buffer
 }
 
-module.exports = generate
+export default generate
