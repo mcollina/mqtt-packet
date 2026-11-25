@@ -298,5 +298,4 @@ protocol.parserErrorCodes = {
   UNSUPPORTED_PROTOCOL_VERSION: 'UNSUPPORTED_PROTOCOL_VERSION'
 }
 
-export const parserErrorCodes = protocol.parserErrorCodes
 export default protocol

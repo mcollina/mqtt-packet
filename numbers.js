@@ -59,7 +59,7 @@ function generate4ByteBuffer (num) {
 export {
   cache,
   generateCache,
+  generateBuffer as generateNumber,
   genBufVariableByteInt,
   generate4ByteBuffer
 }
-export const generateNumber = generateBuffer

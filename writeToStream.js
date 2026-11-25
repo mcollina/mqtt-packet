@@ -1,6 +1,12 @@
 import protocol from './constants.js'
 import { Buffer } from 'buffer'
-import * as numbers from './numbers.js'
+import {
+  cache as numCache,
+  generateNumber,
+  generateCache,
+  genBufVariableByteInt,
+  generate4ByteBuffer
+} from './numbers.js'
 import processNextTickArgs from 'process-nextick-args'
 import debugFactory from 'debug'
 
@@ -9,11 +15,6 @@ const zeroBuf = Buffer.from([0])
 const nextTick = processNextTickArgs.nextTick
 const debug = debugFactory('mqtt-packet:writeToStream')
 
-const numCache = numbers.cache
-const generateNumber = numbers.generateNumber
-const generateCache = numbers.generateCache
-const genBufVariableByteInt = numbers.genBufVariableByteInt
-const generate4ByteBuffer = numbers.generate4ByteBuffer
 let writeNumber = writeNumberCached
 let toGenerate = true
 

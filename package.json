@@ -8,8 +8,6 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./mqtt.js",
-      "require": "./mqtt.js",
       "default": "./mqtt.js"
     },
     "./package.json": "./package.json"

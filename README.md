@@ -27,7 +27,7 @@ Examples
 ### Generating
 
 ```js
-import * as mqtt from 'mqtt-packet';
+import mqtt from 'mqtt-packet';
 const object = {
   cmd: 'publish',
   retain: false,
@@ -57,7 +57,7 @@ console.log(mqtt.generate(object))
 ### Parsing
 
 ```js
-import * as mqtt from 'mqtt-packet';
+import mqtt from 'mqtt-packet';
 const opts = { protocolVersion: 4 }; // default is 4. Usually, opts is a connect packet
 const parser = mqtt.parser(opts);
 
